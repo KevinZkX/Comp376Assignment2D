@@ -11,18 +11,51 @@ public class BubbleGun : MonoBehaviour {
 
     private Yellow_Ball yellow_clone;
     private Red_Ball red_clone;
+    private Ball ball_clone;
+
+    private BallMatrix ballMatrix;
 
     private bool yellow = false;
     private bool red = false;
 
     [SerializeField]
+    GameObject gamePlay;
+    [SerializeField]
     GameObject yellowBallPerfab;
     [SerializeField]
     GameObject redBallPerfab;
+    [SerializeField]
+    GameObject ballPerfab;
 
 	// Use this for initialization
 	void Start () {
-		
+
+        for (int i = 0; i <= 6; i++)
+        {
+            float y = 2.8f - 0.55f * i;
+            if (i % 2 == 0)
+            {
+                for (int j = 0; j < 8; j++)
+                {
+                    float x = -2.24f + 0.64f * j;
+
+                    ball_clone = Instantiate(ballPerfab, new Vector3(x, y), Quaternion.identity).GetComponent<Ball>();
+
+                }
+
+            }
+            else
+            {
+                for (int j = 0; j < 7; j++)
+                {
+                    float x = -2.24f + 0.32f + 0.64f * j;
+                    ball_clone = Instantiate(ballPerfab, new Vector3(x, y), Quaternion.identity).GetComponent<Ball>();
+                }
+            }
+        }
+        ballMatrix = BallMatrix.CreateBallMatrix;
+        ballMatrix.addCurrentBalls();
+
 	}
 	
 	// Update is called once per frame
@@ -54,54 +87,19 @@ public class BubbleGun : MonoBehaviour {
 
         //shoot the ball
         if (Input.GetButtonDown("Shoot") && ready_to_shoot) {
-            if (yellow) 
-            {
-                
-                direction.Set(-Mathf.Sin(angle), Mathf.Cos(angle));
-                direction.Normalize();
-                Debug.Log(angle);
-                Debug.Log(direction);
-
-                yellow_clone.setDirection(direction);
-                yellow_clone.SetupCollider();
-                ready_to_shoot = false;
-                yellow = false;
-            }
-            else if (red) 
-            {
-                direction.Set(-Mathf.Sin(angle), Mathf.Cos(angle));
-                direction.Normalize();
-                Debug.Log(angle);
-                Debug.Log(direction);
-
-                red_clone.setDirection(direction);
-                ready_to_shoot = false;
-                red = false;
-            }
-
+            ball_clone.enabled = true;
+            ball_clone.name = "Moving";
+            ball_clone.move(gameObject.transform.up);
+            ready_to_shoot = false;
+            ball_clone.moving = true;
         }
 
         else if (!ready_to_shoot)
 		{
-
-            int colour_range = Random.Range(0, 100);
-            Debug.Log(colour_range);
-
-            if (colour_range < 50) 
-            {
-                yellow_clone = Instantiate(yellowBallPerfab, this.transform.position, Quaternion.identity).GetComponent<Yellow_Ball>();
-                yellow = true;
-                ready_to_shoot = true;
-                yellow_clone.setZeroVelocity();
-            }
-            else if (colour_range > 50)
-            {
-                red_clone = Instantiate(redBallPerfab, this.transform.position, Quaternion.identity).GetComponent<Red_Ball>();
-                red = true;
-                ready_to_shoot = true;
-                red_clone.setZeroVelocity();
-            }
+            ball_clone = Instantiate(ballPerfab, this.transform.position, Quaternion.identity).GetComponent<Ball>();
+            ball_clone.name = "Ready";
+            ball_clone.enabled = false;;
+            ready_to_shoot = true;
 		}
-		
 	}
 }

@@ -7,10 +7,18 @@ public class Red_Ball : MonoBehaviour
 
     public string ball_colour = "red";
     private Vector2 direction;
+    public Collider2D[] number_of_red_ball_collised_when_stay;
+    public float radius = 0;
 
     Rigidbody2D redBall;
 
     float ballSpeed = 0;
+
+    //private void Start()
+    //{
+    //    number_of_red_ball_collised_when_stay = Physics2D.OverlapCircleAll(transform.position, radius, 4);
+
+    //}
 
     private void Awake()
     {
@@ -19,10 +27,18 @@ public class Red_Ball : MonoBehaviour
         //int colour_random_number = (int)Random.Range(0.0f, 100.0f);
         redBall.bodyType = RigidbodyType2D.Static;
 
+        number_of_red_ball_collised_when_stay = Physics2D.OverlapCircleAll(transform.parent.position, radius);
+
+
         redBall.freezeRotation = true;
 
         //redBall.velocity = Vector2.up * ballSpeed;
 
+    }
+
+    private void Update()
+    {
+        number_of_red_ball_collised_when_stay = Physics2D.OverlapCircleAll(transform.position, radius);
     }
 
     public void setDirection(Vector2 direction)
@@ -57,4 +73,16 @@ public class Red_Ball : MonoBehaviour
                 redBall.bodyType = RigidbodyType2D.Static;
         }
     }
+
+    //private void OnCollisionStay2D(Collision2D collision)
+    //{
+    //    number_of_red_ball_collised_when_stay.Add(collision.collider.gameObject.GetComponent<Red_Ball>());
+    //    Debug.Log("red:"+number_of_red_ball_collised_when_stay.Count);
+    //}
+
+    //private int NumberOfSameColliderTag (Collision2D collision)
+    //{
+    //    int size = 0;
+    //    Red_Ball[] temp = collision
+    //}
 }
