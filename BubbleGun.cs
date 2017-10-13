@@ -30,7 +30,7 @@ public class BubbleGun : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 
-        for (int i = 0; i <= 6; i++)
+        for (int i = 0; i <= 3; i++)
         {
             float y = 2.8f - 0.55f * i;
             if (i % 2 == 0)
@@ -55,8 +55,19 @@ public class BubbleGun : MonoBehaviour {
         }
         ballMatrix = BallMatrix.CreateBallMatrix;
         ballMatrix.addCurrentBalls();
-
-	}
+        Debug.Log(ballMatrix.balls.Count);
+        foreach (List<GameObject> goList in ballMatrix.balls)
+        {
+            foreach (GameObject go in goList)
+            {
+                if (go.name != "Ready")
+                {
+                    go.GetComponent<Ball>().getNeighbours();
+                    Debug.Log("Check new neighbour");
+                }
+            }
+        }
+    }
 	
 	// Update is called once per frame
 	void FixedUpdate () {

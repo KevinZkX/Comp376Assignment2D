@@ -20,27 +20,101 @@ public class Ball : MonoBehaviour {
     public Ball collideBall;
     public bool moving = false;
     public bool visited = false;
+    public bool sucessDestory = false;
 
     public int row;
     public int coloum;
 
 	// Use this for initialization
 	void Start () {
-        ballMatrix = BallMatrix.CreateBallMatrix;
 	}
 
     private void Awake()
     {
         init();
         speed = 10;
+        ballMatrix = BallMatrix.CreateBallMatrix;
     }
 
     // Update is called once per frame
-    void Update () {
-	}
+    void FixedUpdate () {
+        
+    }
+
+    private void Update()
+    {
+        checkDestory();
+        if (gameObject.name != "Ready")
+            getNeighbours();
+        if (sucessDestory)
+            checkFallDown();
+        
+    }
+
+    private void LateUpdate()
+    {
+        if (gameObject.name != "Ready")
+            getNeighbours();
+    }
+
+
+
+    public void checkFallDown () {
+        Debug.Log("Check Fall Down");
+        foreach (List<GameObject> goList in ballMatrix.balls)
+        {
+            foreach(GameObject go in goList)
+            {
+                ballMatrix.FallDownList(gameObject);
+            }
+        }
+        
+        Debug.Log("Fall Down: " + ballMatrix.fallDown.Count);
+        ballMatrix.visted.RemoveRange(0, ballMatrix.visted.Count);
+        ballMatrix.fallDown.RemoveRange(0, ballMatrix.fallDown.Count);
+        //foreach (List<GameObject> goList in ballMatrix.balls)
+        //{
+        //    Excusive(goList, ballMatrix.fallDown);
+        //}
+        //foreach (GameObject go in ballMatrix.fallDown) {
+        //    Destroy(go);
+        //}
+    }
+
+    public void checkDestory () {
+        if (gameObject.name == "NeedCheck")
+        {
+            ballMatrix.DestoryList(gameObject, mColor);
+            Debug.Log("Destory: " + ballMatrix.destory.Count);
+            if (ballMatrix.destory.Count > 2)
+            {
+                sucessDestory = true;
+                Debug.Log("Ready to destory");
+                foreach (List<GameObject> goList in ballMatrix.balls)
+                {
+                    Excusive(goList, ballMatrix.destory);
+                }
+                foreach (GameObject go in ballMatrix.destory)
+                {
+                    Destroy(go);
+                }
+            }
+            ballMatrix.destory.RemoveRange(0, ballMatrix.destory.Count);
+            Debug.Log("After destory: " + ballMatrix.destory.Count);
+            ballMatrix.visted.RemoveRange(0, ballMatrix.visted.Count);
+            Debug.Log("After visit: " + ballMatrix.visted.Count);
+            gameObject.name = "Ball(Clone)";
+        }
+    }
 
     public void getNeighbours () {
+        //if (neighbours != null) {
+        //    neighbours.RemoveRange(0, neighbours.Count);
+        //}
+        //neighbours.AddRange(ballMatrix.getNeighbours(gameObject));
+
         neighbours = ballMatrix.getNeighbours(gameObject);
+
     }
 
     public void setRow (int row) {
@@ -61,25 +135,33 @@ public class Ball : MonoBehaviour {
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        Debug.Log("get in");
+        //Debug.Log("get in");
         if (collision.collider.gameObject.CompareTag("Border")) {
             direction = Vector2.Reflect(direction, Vector2.right);
             move(direction);
         }
 
-        else if (collision.collider.gameObject.name  == "Moving" && (gameObject.name != "Ready" || gameObject.name == "Ball(Clone)")){
-            Debug.Log("do it");
+        else if ((collision.collider.gameObject.name  == "Moving") && (gameObject.name != "Ready" || gameObject.name == "Ball(Clone)")){
             collision.collider.gameObject.GetComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Static;
-            //collision.collider.GetComponent<Ball>().move(new Vector2(0,0));
-            collision.collider.gameObject.GetComponent<Ball>().collideBall = GetComponent<Ball>();
-            collision.collider.gameObject.name = "Ball(Clone)";
             ballMatrix.addNewBall(collision.collider.gameObject, gameObject.GetComponent<Ball>());
+            Debug.Log("Add new ball to balls list");
+            collision.collider.gameObject.GetComponent<Ball>().collideBall = GetComponent<Ball>();
+            collision.collider.gameObject.name = "NeedCheck";
+            collision.collider.gameObject.GetComponent<Ball>().getNeighbours();
+            Debug.Log("Add new neighbours to the new ball" + " : New balls lsit size: " + ballMatrix.balls.Count);
+            foreach (GameObject go in collision.collider.gameObject.GetComponent<Ball>().neighbours)
+            {
+                go.GetComponent<Ball>().getNeighbours();
+            }
+            Debug.Log("Update neighbours' neighbour, neighbour number: " + neighbours.Count);
+            
         }
     }
 
     public void move (Vector2 newDirection) {
         SetDirection(newDirection);
         mRigidbody2D.bodyType = RigidbodyType2D.Dynamic;
+        mRigidbody2D.freezeRotation = true;
         mRigidbody2D.velocity = direction * speed;
     }
 
@@ -163,6 +245,21 @@ public class Ball : MonoBehaviour {
         mCollider2D = gameObject.GetComponent<CircleCollider2D>();
         //set direction to (0, 0)
         direction = new Vector2(0, 0);
-        mRigidbody2D.freezeRotation = true;
+    }
+
+    //remove all the gameObject that is visited
+    public static void Excusive(List<GameObject> list, List<GameObject> removeList)
+    {
+        List<GameObject> excusive = new List<GameObject>();
+        foreach (GameObject go in list)
+        {
+            if (!removeList.Contains(go))
+            {
+                excusive.Add(go);
+            }
+        }
+        list.RemoveRange(0, list.Count);
+        list.AddRange(excusive);
+
     }
 }

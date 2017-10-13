@@ -8,9 +8,15 @@ public class BallMatrix {
     //private int row = 2;
     //private int coloum = 8;
     public List<List<GameObject>> balls;
+    public List<GameObject> visted;
+    public  List<GameObject> destory;
+    public List<GameObject> fallDown;
 
     private BallMatrix() {
         balls = new List<List<GameObject>>();
+        visted = new List<GameObject>();
+        destory = new List<GameObject>();
+        fallDown = new List<GameObject>();
     }
 
     private class Nested {
@@ -85,90 +91,301 @@ public class BallMatrix {
         //Debug.Log("Balls: " + balls.Count);
     }
 
+    //add new ball to the ball list and update its position
     public void addNewBall (GameObject ball_clone, Ball collision) {
         int row = collision.getRow();
         int coloum = collision.getColoum();
-        Debug.Log(row + " " + coloum);
 
-        //even row on the very left
-        if (coloum == 0 && row % 2 == 0) {
-            Debug.Log("even left");
-            ball_clone.transform.position = new Vector3(collision.transform.position.x + 0.32f, collision.transform.position.y - 0.55f);
-            ball_clone.GetComponent<Ball>().setRow(row + 1);
-            ball_clone.GetComponent<Ball>().setColoum(coloum);
-        }
+        float clone_x = ball_clone.transform.position.x;
+        float clone_y = ball_clone.transform.position.y;
 
-        //even row on the very right
-        else if (coloum == 7 && row % 2 == 0) {
-            Debug.Log("even right");
+        float collision_x = ball_clone.transform.position.x;
+        float collision_y = ball_clone.transform.position.y;
 
-            ball_clone.transform.position = new Vector3(collision.transform.position.x - 0.32f, collision.transform.position.y - 0.55f);
-            ball_clone.GetComponent<Ball>().setRow(row + 1);
-            ball_clone.GetComponent<Ball>().setColoum(coloum - 1);
-        }
+        int ball_list_length = balls.Count;
 
-        //odd row on the very left
-        else if (coloum == 0 && row % 2 != 0)
+        bool empty_position = true;
+
+        //Debug.Log(row + " " + coloum);
+
+        //check if the collision is on an even row
+        if (row % 2 == 0)
         {
-            ball_clone.transform.position = new Vector3(collision.transform.position.x - 0.32f, collision.transform.position.y - 0.55f);
-            ball_clone.GetComponent<Ball>().setRow(row + 1);
-            ball_clone.GetComponent<Ball>().setColoum(coloum);
+            //first check if the new ball is on the top or buttom
+            //if clone_y > clone_x, it means ball_clone is on the top of collision
+            if (clone_y > collision_y)
+            {
+                //the check clone_x and collision_x
+                //if clone_x > collision_x, it means ball_clone is on the right of collision
+                if (clone_x > collision_x)
+                {
+                    //check if the new position is empty or not 
+                    foreach (GameObject go in balls[row - 1])
+                    {
+                        if (go.GetComponent<Ball>().getColoum() == coloum)
+                        {
+                            empty_position = false;
+                            break;
+                        }
+                    }
+
+                    if (!empty_position)
+                    {
+                        ball_clone.transform.position = new Vector3(collision.transform.position.x - 0.32f, collision.transform.position.y + 0.55f);
+                        ball_clone.GetComponent<Ball>().setRow(row - 1);
+                        ball_clone.GetComponent<Ball>().setColoum(coloum - 1);
+                    }
+
+                    else
+                    {
+                        ball_clone.transform.position = new Vector3(collision.transform.position.x + 0.32f, collision.transform.position.y + 0.55f);
+                        ball_clone.GetComponent<Ball>().setRow(row - 1);
+                        ball_clone.GetComponent<Ball>().setColoum(coloum);
+                    }
+
+                }
+                //if clone_x < collision_x , it means ball_clone is on the left of collison
+                else if (clone_x <= collision_x)
+                {
+                    //check if the new position is empty or not 
+                    foreach (GameObject go in balls[row - 1])
+                    {
+                        if (go.GetComponent<Ball>().getColoum() == coloum - 1)
+                        {
+                            empty_position = false;
+                            break;
+                        }
+                    }
+
+                    if (!empty_position)
+                    {
+                        ball_clone.transform.position = new Vector3(collision.transform.position.x + 0.32f, collision.transform.position.y + 0.55f);
+                        ball_clone.GetComponent<Ball>().setRow(row - 1);
+                        ball_clone.GetComponent<Ball>().setColoum(coloum);
+                    }
+                    else
+                    {
+                        ball_clone.transform.position = new Vector3(collision.transform.position.x - 0.32f, collision.transform.position.y + 0.55f);
+                        ball_clone.GetComponent<Ball>().setRow(row - 1);
+                        ball_clone.GetComponent<Ball>().setColoum(coloum - 1);
+                    }
+
+                }
+            }
+
+            //if clone_y < clone_x, it means ball_clone is on the buttom of collision
+            else if (clone_y <= collision_y)
+            {
+                //the check clone_x and collision_x
+                //if clone_x > collision_x, it means ball_clone is on the right of collision
+                if (clone_x > collision_x)
+                {
+                    //check if the new position is empty or not 
+                    if (row != ball_list_length - 1)
+                    {
+                        foreach (GameObject go in balls[row + 1])
+                        {
+                            if (go.GetComponent<Ball>().getColoum() == coloum)
+                            {
+                                empty_position = false;
+                                break;
+                            }
+                        }
+                    }
+                    if (!empty_position || coloum == 7)
+                    {
+                        ball_clone.transform.position = new Vector3(collision.transform.position.x - 0.32f, collision.transform.position.y - 0.55f);
+                        ball_clone.GetComponent<Ball>().setRow(row + 1);
+                        ball_clone.GetComponent<Ball>().setColoum(coloum - 1);
+                    }
+                    else
+                    {
+                        ball_clone.transform.position = new Vector3(collision.transform.position.x + 0.32f, collision.transform.position.y - 0.55f);
+                        ball_clone.GetComponent<Ball>().setRow(row + 1);
+                        ball_clone.GetComponent<Ball>().setColoum(coloum);
+                    }
+                    
+                    
+                }
+                //if clone_x < collision_x , it means ball_clone is on the left of collison
+                else if (clone_x <= collision_x)
+                {
+
+                    //check if the new position is empty or not 
+                    if (row != ball_list_length - 1)
+                    {
+                        foreach (GameObject go in balls[row + 1])
+                        {
+                            if (go.GetComponent<Ball>().getColoum() == coloum - 1)
+                            {
+                                empty_position = false;
+                                break;
+                            }
+                        }
+                    }
+                    if (!empty_position || coloum == 0)
+                    {
+                        ball_clone.transform.position = new Vector3(collision.transform.position.x + 0.32f, collision.transform.position.y - 0.55f);
+                        ball_clone.GetComponent<Ball>().setRow(row + 1);
+                        ball_clone.GetComponent<Ball>().setColoum(coloum);
+                    }
+                    else
+                    {
+                        ball_clone.transform.position = new Vector3(collision.transform.position.x - 0.32f, collision.transform.position.y - 0.55f);
+                        ball_clone.GetComponent<Ball>().setRow(row + 1);
+                        ball_clone.GetComponent<Ball>().setColoum(coloum - 1);
+                    }
+                    
+                       
+                }
+            }
         }
-        //odd row on the very right
-        else if (coloum == 6 && row % 2 != 0)
+
+        //collision is on an odd row
+        else
         {
-            ball_clone.transform.position = new Vector3(collision.transform.position.x + 0.32f, collision.transform.position.y - 0.55f);
-            ball_clone.GetComponent<Ball>().setRow(row + 1);
-            ball_clone.GetComponent<Ball>().setColoum(coloum + 1);
-        }
-        //other ball
-        else  {
-           
-            if (ball_clone.transform.position.x >= collision.transform.position.x)
+            //first check if the new ball is on the top or buttom
+            //if clone_y > clone_x, it means ball_clone is on the top of collision
+            if (clone_y > collision_y)
             {
-                ball_clone.transform.position = new Vector3(collision.transform.position.x + 0.32f, collision.transform.position.y - 0.55f);
-                //even row
-                if (row % 2 == 0) {
-                    ball_clone.GetComponent<Ball>().setRow(row + 1);
-                    ball_clone.GetComponent<Ball>().setColoum(coloum);
-                } 
-                //odd row
-                else {
-                    ball_clone.GetComponent<Ball>().setRow(row + 1);
-                    ball_clone.GetComponent<Ball>().setColoum(coloum + 1);
-                }
+                //the check clone_x and collision_x
+                //if clone_x > collision_x, it means ball_clone is on the right of collision
+                if (clone_x >= collision_x)
+                {
+                    //check if the new position is empty or not 
+                    foreach (GameObject go in balls[row - 1])
+                    {
+                        if (go.GetComponent<Ball>().getColoum() == coloum + 1)
+                        {
+                            empty_position = false;
+                            break;
+                        }
+                    }
 
+                    if (!empty_position)
+                    {
+                        ball_clone.transform.position = new Vector3(collision.transform.position.x - 0.32f, collision.transform.position.y + 0.55f);
+                        ball_clone.GetComponent<Ball>().setRow(row - 1);
+                        ball_clone.GetComponent<Ball>().setColoum(coloum);
+                    }
+                    else
+                    {
+                        ball_clone.transform.position = new Vector3(collision.transform.position.x + 0.32f, collision.transform.position.y + 0.55f);
+                        ball_clone.GetComponent<Ball>().setRow(row - 1);
+                        ball_clone.GetComponent<Ball>().setColoum(coloum + 1);
+                    }
+                    
+                }
+                //if clone_x < collision_x , it means ball_clone is on the left of collison
+                else if (clone_x < collision_x)
+                {
+                    //check if the new position is empty or not 
+                    foreach (GameObject go in balls[row - 1])
+                    {
+                        if (go.GetComponent<Ball>().getColoum() == coloum)
+                        {
+                            empty_position = false;
+                            break;
+                        }
+                    }
+
+                    if (!empty_position)
+                    {
+                        ball_clone.transform.position = new Vector3(collision.transform.position.x + 0.32f, collision.transform.position.y + 0.55f);
+                        ball_clone.GetComponent<Ball>().setRow(row - 1);
+                        ball_clone.GetComponent<Ball>().setColoum(coloum + 1);
+                    }
+                    else
+                    {
+                        ball_clone.transform.position = new Vector3(collision.transform.position.x - 0.32f, collision.transform.position.y + 0.55f);
+                        ball_clone.GetComponent<Ball>().setRow(row - 1);
+                        ball_clone.GetComponent<Ball>().setColoum(coloum);
+                    }
+
+                    
+                }
             }
-            else if (ball_clone.transform.position.x < collision.transform.position.x)
+
+            //if clone_y < clone_x, it means ball_clone is on the buttom of collision
+            else if (clone_y <= collision_y)
             {
-                ball_clone.transform.position = new Vector3(collision.transform.position.x - 0.32f, collision.transform.position.y - 0.55f);
-                //even row
-                if (row % 2 == 0) {
-                    ball_clone.GetComponent<Ball>().setRow(row + 1);
-                    ball_clone.GetComponent<Ball>().setColoum(coloum - 1);
-                } 
-                //odd row
-                else {
-                    ball_clone.GetComponent<Ball>().setRow(row + 1);
-                    ball_clone.GetComponent<Ball>().setColoum(coloum);
+                //the check clone_x and collision_x
+                //if clone_x > collision_x, it means ball_clone is on the right of collision
+                if (clone_x >= collision_x)
+                {
+                    //check if the new position is empty or not 
+                    if (row != ball_list_length - 1)
+                    {
+                        foreach (GameObject go in balls[row + 1])
+                        {
+                            if (go.GetComponent<Ball>().getColoum() == coloum + 1)
+                            {
+                                empty_position = false;
+                                break;
+                            }
+                        }
+                    }
+                    if (!empty_position)
+                    {
+                        ball_clone.transform.position = new Vector3(collision.transform.position.x - 0.32f, collision.transform.position.y - 0.55f);
+                        ball_clone.GetComponent<Ball>().setRow(row + 1);
+                        ball_clone.GetComponent<Ball>().setColoum(coloum);
+                    }
+                    else
+                    {
+                        ball_clone.transform.position = new Vector3(collision.transform.position.x + 0.32f, collision.transform.position.y - 0.55f);
+                        ball_clone.GetComponent<Ball>().setRow(row + 1);
+                        ball_clone.GetComponent<Ball>().setColoum(coloum + 1);
+                    }
+                    
                 }
+                //if clone_x < collision_x , it means ball_clone is on the left of collison
+                else if (clone_x < collision_x)
+                {
+                    //check if the new position is empty or not 
+                    if (row != ball_list_length - 1)
+                    {
+                        foreach (GameObject go in balls[row + 1])
+                        {
+                            if (go.GetComponent<Ball>().getColoum() == coloum)
+                            {
+                                empty_position = false;
+                                break;
+                            }
+                        }
+                    }
+                    if (!empty_position)
+                    {
+                        ball_clone.transform.position = new Vector3(collision.transform.position.x + 0.32f, collision.transform.position.y - 0.55f);
+                        ball_clone.GetComponent<Ball>().setRow(row + 1);
+                        ball_clone.GetComponent<Ball>().setColoum(coloum+1);
+                    }
+                    else
+                    {
+                        ball_clone.transform.position = new Vector3(collision.transform.position.x - 0.32f, collision.transform.position.y - 0.55f);
+                        ball_clone.GetComponent<Ball>().setRow(row + 1);
+                        ball_clone.GetComponent<Ball>().setColoum(coloum);
+                    }
 
+                    
+                }
             }
         }
 
-        Debug.Log("keep going");
-        if (balls.Count == row + 2) {
-            Debug.Log("check");
-            balls[row + 1].Add(ball_clone);
-        }
-        else {
-            Debug.Log(balls[balls.Count - 1].Count);
-
+        //add the new ball to the balls list
+        int ball_clone_row = ball_clone.GetComponent<Ball>().getRow();
+        //creat a new row
+        if (ball_clone_row >= ball_list_length)
+        {
             List<GameObject> temp = new List<GameObject>();
             temp.Add(ball_clone);
             balls.Add(temp);
-            Debug.Log(balls[balls.Count - 1].Count);
+        }
 
+        //no need to create a new row
+        else
+        {
+            balls[ball_clone_row].Add(ball_clone);
         }
     }
 
@@ -211,7 +428,7 @@ public class BallMatrix {
             //even row
             if (row % 2 == 0) {
                 //upper
-                foreach (GameObject go in balls[row])
+                foreach (GameObject go in balls[row-1])
                 {
                     //left
                     if (go.GetComponent<Ball>().getColoum() - coloum == -1)
@@ -225,7 +442,7 @@ public class BallMatrix {
                     }
                 }
                 //same row
-                foreach (GameObject go in balls[row + 1])
+                foreach (GameObject go in balls[row])
                 {
                     //left
                     if (go.GetComponent<Ball>().getColoum() - coloum == -1)
@@ -242,7 +459,7 @@ public class BallMatrix {
             //odd row
             else {
                 //upper
-                foreach (GameObject go in balls[row])
+                foreach (GameObject go in balls[row-1])
                 {
                     //left
                     if (go.GetComponent<Ball>().getColoum() - coloum == 0)
@@ -256,7 +473,7 @@ public class BallMatrix {
                     }
                 }
                 //same row
-                foreach (GameObject go in balls[row + 1])
+                foreach (GameObject go in balls[row])
                 {
                     //left
                     if (go.GetComponent<Ball>().getColoum() - coloum == -1)
@@ -276,7 +493,7 @@ public class BallMatrix {
             //even
             if (row % 2 == 0) {
                 //upper row
-                foreach (GameObject go in balls[row])
+                foreach (GameObject go in balls[row-1])
                 {
                     //left
                     if (go.GetComponent<Ball>().getColoum() - coloum == -1)
@@ -321,7 +538,7 @@ public class BallMatrix {
             //odd
             else {
                 //upper
-                foreach (GameObject go in balls[row])
+                foreach (GameObject go in balls[row - 1])
                 {
                     //left
                     if (go.GetComponent<Ball>().getColoum() - coloum == 0)
@@ -335,7 +552,7 @@ public class BallMatrix {
                     }
                 }
                 //same row
-                foreach (GameObject go in balls[row + 1])
+                foreach (GameObject go in balls[row])
                 {
                     //left
                     if (go.GetComponent<Ball>().getColoum() - coloum == -1)
@@ -349,7 +566,7 @@ public class BallMatrix {
                     }
                 }
                 //buttom
-                foreach (GameObject go in balls[row])
+                foreach (GameObject go in balls[row + 1])
                 {
                     //left
                     if (go.GetComponent<Ball>().getColoum() - coloum == 0)
@@ -367,6 +584,56 @@ public class BallMatrix {
         return temp;
     }
 
+    public void DestoryList (GameObject go, Color color) {
+        if (!visted.Contains(go))
+        {
+            visted.Add(go);
+            if (go.GetComponent<Ball>().mColor == color) {
+                destory.Add(go);
+                foreach (GameObject neighbour in go.GetComponent<Ball>().neighbours) {
+                    DestoryList(neighbour, color);
+                }
+            }
+        }
+    }
+
+    private int FallDownCount (GameObject go) {
+        int count = 0;
+        if (go.GetComponent<Ball>().neighbours.Count < 4 && !visted.Contains(go)) {
+            count++;
+            visted.Add(go);
+            foreach (GameObject down in balls[go.GetComponent<Ball>().getRow()]) {
+                count += FallDownCount(down);
+            }
+        }
+        return count;
+    }
+
+    private void FallDown (GameObject go) {
+        if (!visted.Contains(go))
+        {
+            fallDown.Add(go);
+            visted.Add(go);
+            foreach (GameObject neighbour in go.GetComponent<Ball>().neighbours)
+            {
+                fallDown.Add(neighbour);
+            }
+        }
+    }
+
+    public void FallDownList (GameObject go)
+    {
+        visted.RemoveRange(0, visted.Count);
+        int count = FallDownCount(go);
+        visted.RemoveRange(0, visted.Count);
+        if (count == balls[go.GetComponent<Ball>().getRow()].Count)
+        {
+            if (visted.Count != 0)
+                visted.RemoveRange(0, visted.Count);
+            FallDown(go);
+            visted.RemoveRange(0, visted.Count);
+        }
+    }
 }
 
 
