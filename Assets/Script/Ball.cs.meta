@@ -1,0 +1,23 @@
+fileFormatVersion: 2
+guid: d2abad2f15f844014975efe503275d3d
+timeCreated: 1508033239
+licenseType: Free
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences:
+  - black_explo: {fileID: 1321238394459034, guid: 7ca8d677d84324746a3531d1beb4d1ee,
+      type: 2}
+  - red_explo: {fileID: 1477662850954000, guid: fbdf15ae5e3479348988e70b64037e81,
+      type: 2}
+  - gray_explo: {fileID: 1887747531806590, guid: f965474f4510bf54490bf10b0511ec6e,
+      type: 2}
+  - blue_explo: {fileID: 1551605555718866, guid: 95742c031f2ad3c468c4c590f5813f53,
+      type: 2}
+  - yellow_explo: {fileID: 1875772724038196, guid: 20d2a9331f876c04889f7c5c02dad9e3,
+      type: 2}
+  - collideBall: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
