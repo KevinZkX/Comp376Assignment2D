@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class BubbleGun : MonoBehaviour {
 
@@ -9,49 +10,99 @@ public class BubbleGun : MonoBehaviour {
     private Vector3 axis;
     private bool ready_to_shoot = false;
 
-    private Yellow_Ball yellow_clone;
-    private Red_Ball red_clone;
+    private Ball ball_clone_shoot;
     private Ball ball_clone;
+    private Vector2 swapPosition = new Vector2 (-2f, -3.6f);
+
+    private BallMatrix ballMatrix;
 
     private bool yellow = false;
     private bool red = false;
 
-    [SerializeField]
-    GameObject gamePlay;
-    [SerializeField]
-    GameObject yellowBallPerfab;
-    [SerializeField]
-    GameObject redBallPerfab;
+    float idolTime = 10.0f;
+    float mTimer = 0;
+
+    
     [SerializeField]
     GameObject ballPerfab;
 
 	// Use this for initialization
 	void Start () {
 
-        for (int i = 0; i <= 6; i++)
+        if (SceneManager.GetActiveScene().name == "Level_1")
         {
-            float y = 2.8f - 0.55f * i;
-            if (i % 2 == 0)
+            for (int i = 0; i <= 3; i++)
             {
-                for (int j = 0; j < 8; j++)
+                float y = 2.8f - 0.55f * i;
+                if (i % 2 == 0)
                 {
-                    float x = -2.24f + 0.64f * j;
+                    for (int j = 0; j < 8; j++)
+                    {
+                        float x = -2.24f + 0.64f * j;
 
-                    ball_clone = Instantiate(ballPerfab, new Vector3(x, y), Quaternion.identity).GetComponent<Ball>();
+                        ball_clone = Instantiate(ballPerfab, new Vector3(x, y), Quaternion.identity).GetComponent<Ball>();
+
+                    }
 
                 }
-
-            }
-            else
-            {
-                for (int j = 0; j < 7; j++)
+                else
                 {
-                    float x = -2.24f + 0.32f + 0.64f * j;
-                    ball_clone = Instantiate(ballPerfab, new Vector3(x, y), Quaternion.identity).GetComponent<Ball>();
+                    for (int j = 0; j < 7; j++)
+                    {
+                        float x = -2.24f + 0.32f + 0.64f * j;
+                        ball_clone = Instantiate(ballPerfab, new Vector3(x, y), Quaternion.identity).GetComponent<Ball>();
+                    }
                 }
             }
         }
-	}
+
+        else if (SceneManager.GetActiveScene().name == "Level_2")
+        {
+            int star = 0;
+            for (int i = 0; i <= 3; i++)
+            {
+                
+                float y = 2.8f - 0.55f * i;
+                if (i % 2 == 0)
+                {
+                    for (int j = star; j < 8-star; j++)
+                    {
+                        float x = -2.24f + 0.64f * j;
+                        ball_clone = Instantiate(ballPerfab, new Vector3(x, y), Quaternion.identity).GetComponent<Ball>();
+
+                    }
+
+                }
+                else
+                {
+                    for (int j = star; j < 7-star; j++)
+                    {
+                        float x = -2.24f + 0.32f + 0.64f * j;
+                        ball_clone = Instantiate(ballPerfab, new Vector3(x, y), Quaternion.identity).GetComponent<Ball>();
+                    }
+                }
+                star++;
+            }
+        }
+
+        
+        ballMatrix = BallMatrix.CreateBallMatrix;
+        ballMatrix.addCurrentBalls();
+        Debug.Log(ballMatrix.balls.Count);
+        foreach (List<GameObject> goList in ballMatrix.balls)
+        {
+            foreach (GameObject go in goList)
+            {
+                if (go.name != "Ready")
+                {
+                    go.GetComponent<Ball>().getNeighbours();
+                    //Debug.Log("Check new neighbour");
+                }
+            }
+        }
+
+        initTwoBalls();
+    }
 	
 	// Update is called once per frame
 	void FixedUpdate () {
@@ -62,6 +113,7 @@ public class BubbleGun : MonoBehaviour {
          * back because if the angle is smaller than 270 exctally, the condition will fale.
          */
         if (Input.GetButton("Left") && !(transform.rotation.eulerAngles.z > 90.0f && transform.rotation.eulerAngles.z < 265.0f)) {
+
             
             transform.RotateAround(transform.position, -Vector3.forward, -100f * Time.deltaTime);
 			this.transform.rotation.ToAngleAxis(out angle, out axis);
@@ -74,7 +126,8 @@ public class BubbleGun : MonoBehaviour {
          * back because if the angle is greater than 270 exctally, the condition will fale.
          */
 		else if (Input.GetButton("Right") && !(transform.rotation.eulerAngles.z > 95.0f && transform.rotation.eulerAngles.z < 270.0f)) {
-           
+
+            
             transform.RotateAround(transform.position, -Vector3.forward, 100f * Time.deltaTime);
 			this.transform.rotation.ToAngleAxis(out angle, out axis);
             angle = (360 - angle) * Mathf.PI / 180f;
@@ -82,47 +135,57 @@ public class BubbleGun : MonoBehaviour {
 
         //shoot the ball
         if (Input.GetButtonDown("Shoot") && ready_to_shoot) {
-            //if (yellow) 
-            //{
-            //    yellow_clone.setDirection(gameObject.transform.up);
-            //    yellow_clone.SetupCollider();
-            //    ready_to_shoot = false;
-            //    yellow = false;
-            //}
-            //else if (red) 
-            //{
-            //    red_clone.setDirection(gameObject.transform.up);
-            //    ready_to_shoot = false;
-            //    red = false;
-            //}
-
-            ball_clone.move(gameObject.transform.up);
+           
+            ball_clone_shoot.enabled = true;
+            ball_clone_shoot.name = "Moving";
+            ball_clone_shoot.move(gameObject.transform.up);
             ready_to_shoot = false;
-
+            ball_clone_shoot.moving = true;
         }
 
         else if (!ready_to_shoot)
 		{
-
-
-            ball_clone = Instantiate(ballPerfab, this.transform.position, Quaternion.identity).GetComponent<Ball>();
+            ball_clone_shoot = ball_clone;
+            ball_clone_shoot.transform.position = this.transform.position;
+            ball_clone = Instantiate(ballPerfab, swapPosition, Quaternion.identity).GetComponent<Ball>();
+            ball_clone_shoot.name = "Ready";
+            ball_clone.name = "Standby";
+            ball_clone_shoot.enabled = false;
+            ball_clone.enabled = false;;
             ready_to_shoot = true;
-
-            //if (colour_range < 50) 
-            //{
-            //    yellow_clone = Instantiate(yellowBallPerfab, this.transform.position, Quaternion.identity).GetComponent<Yellow_Ball>();
-            //    //gamePlay.AddComponent<Yellow_Ball>();
-            //    yellow = true;
-            //    ready_to_shoot = true;
-            //    yellow_clone.setZeroVelocity();
-            //}
-            //else if (colour_range > 50)
-            //{
-            //    red_clone = Instantiate(redBallPerfab, this.transform.position, Quaternion.identity).GetComponent<Red_Ball>();
-            //    red = true;
-            //    ready_to_shoot = true;
-            //    red_clone.setZeroVelocity();
-            //}
 		}
+
+        IdolMove();
 	}
+
+
+    private void initTwoBalls ()
+    {
+        ball_clone = Instantiate(ballPerfab, swapPosition, Quaternion.identity).GetComponent<Ball>();
+        ball_clone.name = "Standby";
+        ball_clone_shoot = Instantiate(ballPerfab, this.transform.position, Quaternion.identity).GetComponent<Ball>();
+        ball_clone_shoot.name = "Ready";
+        ball_clone.enabled = false;
+        ball_clone_shoot.enabled = false;
+        ready_to_shoot = true;
+    }
+
+    private  void IdolMove ()
+    {
+        mTimer += Time.deltaTime;
+        if (mTimer >= idolTime)
+        {
+            GameObject top = GameObject.FindGameObjectWithTag("Top");
+            top.transform.Translate(Vector2.down * 0.55f);
+            foreach (List<GameObject> goList in ballMatrix.balls)
+            {
+                foreach (GameObject go in goList)
+                {
+                    go.transform.Translate(Vector2.down * 0.55f);
+                }
+            }
+            mTimer = 0;
+        }
+    }
+
 }

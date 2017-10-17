@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public enum Color { YELLOW, BLUE, RED, BLACK, GRAY };
 
@@ -9,37 +10,192 @@ public class Ball : MonoBehaviour {
     Rigidbody2D mRigidbody2D;
     CircleCollider2D mCollider2D;
     Sprite[] sprites;
+    BallMatrix ballMatrix;
+    Animator mAnimator;
+    
+    int score = 0;
+
+    [SerializeField]
+    Text Score;
+    [SerializeField]
+    GameObject black_explo;
+    [SerializeField]
+    GameObject red_explo;
+    [SerializeField]
+    GameObject gray_explo;
+    [SerializeField]
+    GameObject blue_explo;
+    [SerializeField]
+    GameObject yellow_explo;
+
+    GameObject explo;
+
+
+    bool red;
+    bool blue;
+    bool black;
+    bool gray;
+    bool yellow;
+
     float speed;
     float radius = 0.32f;
     public Vector2 direction;
     public Color mColor;
     public bool staticBall = false;
-    public List<Ball> neighbours;
+    public List<GameObject> neighbours;
     public bool added = false;
+    public Ball collideBall;
+    public bool moving = false;
+    public bool visited = false;
+    public bool sucessDestory = false;
+    public bool toTop = false;
 
-    int row;
-    int coloum;
+    public int row;
+    public int coloum;
 
 	// Use this for initialization
 	void Start () {
-        init();
-        speed = 10;
 	}
 
     private void Awake()
     {
+        init();
+        speed = 10;
+        ballMatrix = BallMatrix.CreateBallMatrix;
     }
 
     // Update is called once per frame
-    void Update () {
-	}
+    void FixedUpdate () {
+        
+    }
+
+    private void Update()
+    {
+        checkDestory();
+        if (gameObject.name != "Ready")
+            getNeighbours();
+        if (explo != null)
+        {
+            Debug.Log("Destory anim");
+            explo.GetComponent<Animation>().enabled = false;
+            Destroy(explo, explo.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).length + 60);
+            Destroy(explo);
+        }
+
+        //checkFallDown();
+
+    }
+
+    //private void LateUpdate()
+    //{
+    //    if (gameObject.name != "Ready")
+    //        getNeighbours();
+    //}
+
+    public void Explosion ()
+    {
+        switch (mColor)
+        {
+            case Color.BLACK:
+                explo = Instantiate(black_explo, this.transform.position, Quaternion.identity);
+                break;
+            case Color.BLUE:
+                explo = Instantiate(blue_explo, this.transform.position, Quaternion.identity);
+                break;
+            case Color.GRAY:
+                explo = Instantiate(gray_explo, this.transform.position, Quaternion.identity);
+                break;
+            case Color.RED:
+                explo = Instantiate(red_explo, this.transform.position, Quaternion.identity);
+                break;
+            case Color.YELLOW:
+                explo = Instantiate(yellow_explo, this.transform.position, Quaternion.identity);
+                break;
+        }
+    }
+
+    public void checkFallDown()
+    {
+        if (gameObject.name == "Ball(Clone)") {
+            Debug.Log("Check Fall Down");
+
+            //ballMatrix.FallDownList(gameObject);
+
+            Debug.Log("Fall Down: " + ballMatrix.fallDown.Count);
+            
+            
+        }
+        //foreach (List<GameObject> goList in ballMatrix.balls)
+        //{
+        //    Excusive(goList, ballMatrix.fallDown);
+        //}
+        //foreach (GameObject go in ballMatrix.fallDown) {
+        //    Destroy(go);
+        //}
+    }
+
+    public void getScore()
+    {
+        int destoryNumber = ballMatrix.destory.Count;
+        score += destoryNumber * 10;
+        Score.text = score.ToString();
+    }
+
+    public void checkDestory () {
+        if (gameObject.name == "NeedCheck")
+        {
+            ballMatrix.DestoryList(gameObject, mColor);
+            Debug.Log("Destory: " + ballMatrix.destory.Count);
+            if (ballMatrix.destory.Count > 2)
+            {
+                sucessDestory = true;
+                Debug.Log("Ready to destory");
+                foreach (List<GameObject> goList in ballMatrix.balls)
+                {
+                    Excusive(goList, ballMatrix.destory);
+                    
+                }
+                //getScore();
+                foreach (GameObject go in ballMatrix.destory)
+                {
+                    go.GetComponent<Ball>().Explosion();
+                    
+                    Destroy(go);
+                    
+                    
+                }
+            }
+
+            
+            //else
+            //{
+            //    foreach (GameObject go in ballMatrix.fallDown)
+            //    {
+            //        go.GetComponent<Ball>().visited = false;
+            //    }
+            //    ballMatrix.fallDown.RemoveRange(0, ballMatrix.fallDown.Count);
+            //}
+            ballMatrix.destory.RemoveRange(0, ballMatrix.destory.Count);
+            Debug.Log("After destory: " + ballMatrix.destory.Count);
+            ballMatrix.visted.RemoveRange(0, ballMatrix.visted.Count);
+            Debug.Log("After visit: " + ballMatrix.visted.Count);
+            ballMatrix.fallDown = BallMatrix.Distinct(ballMatrix.fallDown);
+            //ballMatrix.modifyFallList();
+            Debug.Log("Fall list modified. actualFallDown count: " + ballMatrix.actualFallDown.Count);
+            Debug.Log("Fall down list: " + ballMatrix.fallDown.Count);
+            gameObject.name = "Ball(Clone)";
+        }
+    }
 
     public void getNeighbours () {
-        Collider2D[] nearCollider = Physics2D.OverlapCircleAll(transform.position, 0.32f);
-        foreach (Collider2D temp in nearCollider) {
-            if (temp.gameObject.CompareTag("Ball"))
-                neighbours.Add(temp.gameObject.GetComponent<Ball>());
-        }
+        //if (neighbours != null) {
+        //    neighbours.RemoveRange(0, neighbours.Count);
+        //}
+        //neighbours.AddRange(ballMatrix.getNeighbours(gameObject));
+
+        neighbours = ballMatrix.getNeighbours(gameObject);
+
+
     }
 
     public void setRow (int row) {
@@ -60,19 +216,51 @@ public class Ball : MonoBehaviour {
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
+        //Debug.Log("get in");
         if (collision.collider.gameObject.CompareTag("Border")) {
             direction = Vector2.Reflect(direction, Vector2.right);
             move(direction);
         }
 
-        //else if (collider.collider.gameObject.CompareTag("Ball")) {
-        //    gameObject.
-        //}
+        else if ((collision.collider.gameObject.name  == "Moving") && (gameObject.name != "Ready" || gameObject.name == "Ball(Clone)")){
+            collision.collider.gameObject.GetComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Static;
+            ballMatrix.addNewBall(collision.collider.gameObject, gameObject.GetComponent<Ball>());
+            Debug.Log("Add new ball to balls list");
+            collision.collider.gameObject.GetComponent<Ball>().collideBall = GetComponent<Ball>();
+            collision.collider.gameObject.name = "NeedCheck";
+            collision.collider.gameObject.GetComponent<Ball>().getNeighbours();
+            Debug.Log("Add new neighbours to the new ball" + " : New balls lsit size: " + ballMatrix.balls.Count);
+            foreach (GameObject go in collision.collider.gameObject.GetComponent<Ball>().neighbours)
+            {
+                go.GetComponent<Ball>().getNeighbours();
+            }
+            Debug.Log("Update neighbours' neighbour, neighbour number: " + neighbours.Count); 
+        }
+
+        else if (collision.collider.gameObject.CompareTag("Top") && gameObject.name == "Moving")
+        {
+            mRigidbody2D.bodyType = RigidbodyType2D.Static;
+            ballMatrix.addNewBallToTheTop(gameObject);
+            gameObject.name = "NeedCheck";
+            getNeighbours();
+            Debug.Log("Add new neighbours to the new ball" + " : New balls lsit size: " + ballMatrix.balls.Count);
+            foreach (GameObject go in collision.collider.gameObject.GetComponent<Ball>().neighbours)
+            {
+                go.GetComponent<Ball>().getNeighbours();
+            }
+            Debug.Log("Update neighbours' neighbour, neighbour number: " + neighbours.Count);
+        }
+
+        else if (gameObject.name == "Ball(Clone)" && collision.collider.gameObject.tag == "Buttom")
+        {
+            
+        }
     }
 
     public void move (Vector2 newDirection) {
         SetDirection(newDirection);
         mRigidbody2D.bodyType = RigidbodyType2D.Dynamic;
+        mRigidbody2D.freezeRotation = true;
         mRigidbody2D.velocity = direction * speed;
     }
 
@@ -112,40 +300,65 @@ public class Ball : MonoBehaviour {
                 mColor = Color.BLACK;
             }
 
-            //greater or equal than 50 is a gray ball    
+            //greater or equal than 80 is a gray ball    
             else if (ColorRandomer() >= 80)
             {
-                mColor = Color.BLUE;
+                Debug.Log("Gray Ball");
+                mColor = Color.GRAY;
             }
         }
 
         switch (mColor)
         {
             case Color.YELLOW:
-                mSpriteRenderer.sprite = sprites[248];
-                break;
+                {
+                    mSpriteRenderer.sprite = sprites[248];
+                    yellow = true;
+                    mAnimator.SetBool("isYellow", yellow);
+                    break;
+                }
+                
             case Color.RED:
-                mSpriteRenderer.sprite = sprites[236];
-                break;
+                {
+                    mSpriteRenderer.sprite = sprites[236];
+                    red = true;
+                    mAnimator.SetBool("isRed", red);
+                    break;
+                }
+                
             case Color.BLUE:
-                mSpriteRenderer.sprite = sprites[180];
-                break;
+                {
+                    mSpriteRenderer.sprite = sprites[180];
+                    blue = true;
+                    mAnimator.SetBool("isBlue", blue);
+                    break;
+                }
+                
             case Color.BLACK:
-                mSpriteRenderer.sprite = sprites[222];
-                break;
+                {
+                    mSpriteRenderer.sprite = sprites[222];
+                    black = true;
+                    mAnimator.SetBool("isBlack", black);
+                    break;
+                }
+                
             case Color.GRAY:
-                mSpriteRenderer.sprite = sprites[208];
-                break;
+                {
+                    mSpriteRenderer.sprite = sprites[208];
+                    gray = true;
+                    mAnimator.SetBool("isGray", gray);
+                    break;
+                }
         }
         
     }
     //initialize the ball
     void init()
     {
+        mAnimator = gameObject.GetComponent<Animator>();
         //get sprite renderer
         mSpriteRenderer = gameObject.GetComponent<SpriteRenderer>();
         sprites = Resources.LoadAll<Sprite>("OoO_教授飞妈ver");
-
         BallColorRandmoer();
         //mSpriteRenderer.sortingOrder = 4;
         //create rigidbody2D
@@ -154,8 +367,26 @@ public class Ball : MonoBehaviour {
         mRigidbody2D.bodyType = RigidbodyType2D.Static;
         //create collider
         mCollider2D = gameObject.GetComponent<CircleCollider2D>();
+
+        //get animator
+        
         //set direction to (0, 0)
         direction = new Vector2(0, 0);
-        mRigidbody2D.freezeRotation = true;
+    }
+
+    //remove all the gameObject that is visited
+    public static void Excusive(List<GameObject> list, List<GameObject> removeList)
+    {
+        List<GameObject> excusive = new List<GameObject>();
+        foreach (GameObject go in list)
+        {
+            if (!removeList.Contains(go))
+            {
+                excusive.Add(go);
+            }
+        }
+        list.RemoveRange(0, list.Count);
+        list.AddRange(excusive);
+
     }
 }
